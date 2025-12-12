@@ -451,17 +451,6 @@ chore: 构建/工具
 
 MIT License
 
-## 🙏 致谢
-
-- Chrome Extensions 开发团队
-- AI 平台提供商
-- 开源社区
-
-## 📞 联系方式
-
-- **GitHub Issues**: 问题反馈
-- **Pull Request**: 代码贡献
-
 ---
 
 **享受 WebMind 带来的智能体验！** 🚀✨
