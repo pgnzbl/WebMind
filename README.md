@@ -1,6 +1,10 @@
 # 🧠 WebMind - 网页智能助手
 
 一个强大的 Chrome 浏览器扩展，集成多个 AI 大模型服务，将网页内容智能转换为结构化文档。
+<img width="450" height="600" alt="image" src="https://github.com/user-attachments/assets/1e103d53-036d-40ec-999f-d2ec286e5fe2" />
+<img width="458" height="600" alt="image" src="https://github.com/user-attachments/assets/4861449b-ba1a-4711-b82e-a05c9a13b170" />
+<img width="1917" height="914" alt="image" src="https://github.com/user-attachments/assets/9b6fb7de-336b-4735-98e8-ccf2af4f2fd9" />
+
 
 ## ✨ 功能特性
 
