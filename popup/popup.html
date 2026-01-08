@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebMind</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- 头部 -->
+    <header class="header">
+      <h1 class="logo">🧠 WebMind</h1>
+      <button class="settings-btn" id="openSettings" title="设置">⚙️</button>
+    </header>
+
+    <!-- 标签页 -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="generate">生成文档</button>
+      <button class="tab-btn" data-tab="config">配置</button>
+      <button class="tab-btn" data-tab="history">历史</button>
+    </div>
+
+    <!-- 生成文档标签页 -->
+    <div class="tab-content active" id="generateTab">
+      <div class="section">
+        <label class="label">选择代理</label>
+        <select class="select" id="agentSelect">
+          <option value="">请先创建代理</option>
+        </select>
+        <button class="btn-text" id="createAgentBtn">+ 创建新代理</button>
+      </div>
+
+      <!-- 文档生成模式界面 -->
+      <div class="section document-mode-section" id="documentModeSection">
+        <label class="label">当前网页</label>
+        <div class="page-info">
+          <div class="page-title" id="pageTitle">加载中...</div>
+          <div class="page-url" id="pageUrl"></div>
+        </div>
+      </div>
+
+      <div class="section document-mode-section" id="documentModeButtonSection">
+        <button class="btn btn-primary" id="generateBtn">
+          <span id="generateBtnText">🚀 生成文档</span>
+        </button>
+      </div>
+
+      <!-- 聊天模式界面 -->
+      <div class="section chat-mode-section hidden" id="chatModeSection">
+        <div class="chat-input-container">
+          <textarea class="chat-input" id="chatInput" placeholder="输入你的问题..." rows="3"></textarea>
+          <button class="btn btn-primary" id="chatSendBtn">发送</button>
+        </div>
+      </div>
+
+      <!-- 进度显示 -->
+      <div class="progress-section hidden" id="progressSection">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">正在处理...</div>
+      </div>
+
+      <!-- 流式输出显示 -->
+      <div class="streaming-section hidden" id="streamingSection">
+        <div class="streaming-header">
+          <span class="streaming-title">🤖 AI 正在生成...</span>
+          <span class="streaming-status" id="streamingStatus">连接中</span>
+        </div>
+        <div class="streaming-content" id="streamingContent"></div>
+        <div class="streaming-footer">
+          <button class="btn btn-danger btn-small" id="stopStreamBtn">⏹️ 停止生成</button>
+        </div>
+      </div>
+
+      <!-- 结果显示 -->
+      <div class="result-section hidden" id="resultSection">
+        <div class="result-header">
+          <span class="result-title">✅ 生成完成</span>
+          <div class="result-actions-header">
+            <button class="btn-icon" id="copyResultBtn" title="复制">📋</button>
+            <button class="btn-icon" id="regenerateBtn" title="重新生成">🔄</button>
+          </div>
+        </div>
+        <div class="result-preview" id="resultPreview"></div>
+        <div class="result-actions">
+          <button class="btn btn-primary" id="downloadMdBtn">💾 下载 Markdown</button>
+          <button class="btn btn-secondary" id="downloadDocxBtn">📄 下载 Word</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 配置标签页 -->
+    <div class="tab-content" id="configTab">
+      <div class="section">
+        <h3 class="section-title">AI 平台配置</h3>
+        <div id="providersList"></div>
+      </div>
+      <div class="section">
+        <button class="btn btn-secondary" id="detectModelsBtn">🔍 检测可用模型</button>
+      </div>
+    </div>
+
+    <!-- 历史记录标签页 -->
+    <div class="tab-content" id="historyTab">
+      <div class="section">
+        <div class="history-header">
+          <h3 class="section-title">历史记录</h3>
+          <button class="btn-text" id="clearHistoryBtn">清空</button>
+        </div>
+        <div id="historyList" class="history-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
+

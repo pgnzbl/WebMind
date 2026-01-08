@@ -1,0 +1,24 @@
+{
+  "name": "webmind",
+  "version": "2.0.0",
+  "description": "网页智能助手 - 集成多个 AI 大模型，将网页内容转换为结构化文档",
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'Load unpacked extension in Chrome from current directory'",
+    "build": "npm run zip",
+    "zip": "zip -r webmind.zip . -x '*.git*' 'node_modules/*' '*.zip' '*.crx' '*.pem' 'package*.json'",
+    "lint": "echo 'No linter configured yet'"
+  },
+  "keywords": [
+    "chrome-extension",
+    "ai",
+    "markdown",
+    "document-generation",
+    "web-scraping"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {},
+  "dependencies": {}
+}
+

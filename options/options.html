@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebMind - 设置</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1 class="logo">🧠 WebMind</h1>
+        <p class="version" id="app-version">v--</p>
+      </div>
+      
+      <nav class="nav">
+        <button class="nav-item active" data-section="agents">
+          <span class="nav-icon">🤖</span>
+          <span class="nav-text">智能代理</span>
+        </button>
+        <button class="nav-item" data-section="providers">
+          <span class="nav-icon">🔌</span>
+          <span class="nav-text">API 配置</span>
+        </button>
+        <button class="nav-item" data-section="knowledgebase">
+          <span class="nav-icon">📚</span>
+          <span class="nav-text">知识库管理</span>
+        </button>
+        <button class="nav-item" data-section="settings">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-text">通用设置</span>
+        </button>
+        <button class="nav-item" data-section="about">
+          <span class="nav-icon">ℹ️</span>
+          <span class="nav-text">关于</span>
+        </button>
+      </nav>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 智能代理页面 -->
+      <section class="content-section active" id="agentsSection">
+        <div class="section-header">
+          <h2 class="section-title">智能代理管理</h2>
+          <button class="btn btn-primary" id="createAgentBtn">+ 创建新代理</button>
+        </div>
+
+        <div class="agents-grid" id="agentsGrid">
+          <!-- 代理卡片将动态生成 -->
+        </div>
+
+        <div class="empty-state hidden" id="agentsEmpty">
+          <div class="empty-icon">🤖</div>
+          <h3>还没有智能代理</h3>
+          <p>创建你的第一个 AI 代理来开始使用 WebMind</p>
+          <button class="btn btn-primary" onclick="document.getElementById('createAgentBtn').click()">
+            创建第一个代理
+          </button>
+        </div>
+      </section>
+
+      <!-- API 配置页面 -->
+      <section class="content-section" id="providersSection">
+        <div class="section-header">
+          <h2 class="section-title">AI 平台配置</h2>
+          <button class="btn btn-secondary" id="detectAllModelsBtn">🔍 检测所有模型</button>
+        </div>
+
+        <div class="providers-list" id="providersList">
+          <!-- 平台配置卡片将动态生成 -->
+        </div>
+      </section>
+
+      <!-- 知识库管理页面 -->
+      <section class="content-section" id="knowledgebaseSection">
+        <div class="section-header">
+          <h2 class="section-title">知识库管理</h2>
+        </div>
+
+        <div class="knowledge-base-section">
+          <div class="rag-backend-config">
+            <label class="form-label">RAG 后端地址:</label>
+            <input type="text" class="form-input" id="ragBackendUrl" placeholder="http://localhost:8000" style="width: 300px; margin-left: 8px;">
+            <button class="btn btn-secondary btn-small" id="checkRAGBackendBtn" style="margin-left: 8px;">检查连接</button>
+            <span class="rag-status" id="ragStatus"></span>
+            <p class="form-help" style="margin-top: 8px; margin-left: 0;">配置 RAG 后端服务地址，用于知识库的向量存储和检索</p>
+          </div>
+
+          <div class="rag-api-key-config" style="margin-top: 16px;">
+            <label class="form-label">RAG 后端 API 密钥:</label>
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+              <input type="password" class="form-input" id="ragApiKey" placeholder="请输入API密钥" style="width: 300px;">
+              <button class="btn btn-secondary btn-small" id="toggleApiKeyVisibility" title="显示/隐藏">👁️</button>
+              <button class="btn btn-secondary btn-small" id="saveRAGApiKeyBtn">保存</button>
+            </div>
+            <p class="form-help" style="margin-top: 8px; margin-left: 0;">配置 RAG 后端的 API 密钥，用于认证 API 请求。如果后端未启用 API 密钥验证，可以留空。</p>
+          </div>
+
+          <div class="kb-create-section" style="margin-top: 24px;">
+            <div class="form-group-inline">
+              <input type="text" class="form-input" id="newKBName" placeholder="输入知识库名称">
+              <button class="btn btn-primary" id="createKBBtn">创建知识库</button>
+            </div>
+            <p class="form-help" style="margin-top: 8px;">创建新的知识库，用于存储和管理文档</p>
+          </div>
+
+          <div class="knowledge-bases-list" id="knowledgeBasesList" style="margin-top: 24px;">
+            <!-- 知识库卡片将动态生成 -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 通用设置页面 -->
+      <section class="content-section" id="settingsSection">
+        <div class="section-header">
+          <h2 class="section-title">通用设置</h2>
+        </div>
+
+        <div class="settings-form">
+          <div class="form-group">
+            <label class="form-label">默认代理</label>
+            <select class="form-select" id="defaultAgentSelect">
+              <option value="">无</option>
+            </select>
+            <p class="form-help">打开弹窗时自动选择的代理</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">主题</label>
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="theme" value="light">
+                <span>浅色</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="theme" value="dark">
+                <span>深色</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="theme" value="auto" checked>
+                <span>自动</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">历史记录上限</label>
+            <input type="number" class="form-input" id="maxHistorySize" value="100" min="10" max="1000">
+            <p class="form-help">最多保存的历史记录数量</p>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="autoCleanHistory" checked>
+              <span>自动清理历史记录</span>
+            </label>
+            <p class="form-help">达到上限时自动删除最旧的记录</p>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-primary" id="saveSettingsBtn">保存设置</button>
+            <button class="btn btn-secondary" id="exportDataBtn">导出数据</button>
+            <button class="btn btn-secondary" id="importDataBtn">导入数据</button>
+            <input type="file" id="importFileInput" accept=".json" style="display: none;">
+          </div>
+        </div>
+      </section>
+
+      <!-- 关于页面 -->
+      <section class="content-section" id="aboutSection">
+        <div class="section-header">
+          <h2 class="section-title">关于 WebMind</h2>
+        </div>
+
+        <div class="about-content">
+          <div class="about-logo">🧠</div>
+          <h3>WebMind - 网页智能助手</h3>
+          <p class="version-info" id="app-version-info">版本 --</p>
+          
+          <div class="about-description">
+            <p>WebMind 是一个强大的 Chrome 浏览器扩展，它集成了多个 AI 大模型服务，能够智能提取网页内容并生成结构化文档。</p>
+          </div>
+
+          <div class="about-features">
+            <h4>核心功能</h4>
+            <ul>
+              <li>✅ 支持多个 AI 平台（DeepSeek、通义千问、硅基流动、OpenAI）</li>
+              <li>✅ 灵活的模型配置（自动检测 + 手动添加）</li>
+              <li>✅ 自定义智能代理和提示词</li>
+              <li>✅ 实时流式输出，查看 AI 生成过程</li>
+              <li>✅ 智能网页内容提取</li>
+              <li>✅ 一键生成 Markdown/Word 文档</li>
+              <li>✅ 本地数据存储，保护隐私</li>
+            </ul>
+          </div>
+
+          <div class="about-features">
+            <h4>最新更新 (<span id="app-version-update">v--</span>)</h4>
+            <ul>
+              <li>🆕 知识库（RAG）功能集成</li>
+              <li>🆕 聊天模式支持</li>
+              <li>🆕 Agent 改为单选模型，逻辑更清晰</li>
+              <li>🆕 完整支持通义千问 Qwen3 系列</li>
+              <li>🆕 优化用户界面和交互体验</li>
+            </ul>
+          </div>
+
+          <div class="about-links">
+            <a href="https://github.com" target="_blank" class="btn btn-secondary">GitHub 仓库</a>
+            <a href="https://github.com/issues" target="_blank" class="btn btn-secondary">反馈问题</a>
+          </div>
+
+          <div class="about-footer">
+            <p>© 2024 WebMind. MIT License.</p>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">最后更新: 2024年12月</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 代理编辑模态框 -->
+  <div class="modal hidden" id="agentModal">
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">创建智能代理</h3>
+        <button class="modal-close" id="modalCloseBtn">×</button>
+      </div>
+      
+      <div class="modal-body">
+        <form id="agentForm">
+          <input type="hidden" id="agentId">
+          
+          <div class="form-group">
+            <label class="form-label required">代理名称</label>
+            <input type="text" class="form-input" id="agentName" placeholder="例如：技术文档分析师" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">代理描述</label>
+            <textarea class="form-textarea" id="agentDescription" rows="2" placeholder="简要描述这个代理的用途"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label required">System Prompt</label>
+            <textarea class="form-textarea" id="agentSystemPrompt" rows="6" placeholder="定义代理的工作方向、范围和限制..." required></textarea>
+            <p class="form-help">这是代理的核心指令，定义了它的行为方式和工作范围</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">提示词模板</label>
+            <textarea class="form-textarea" id="agentPromptTemplate" rows="4" placeholder="请分析以下网页内容：&#10;&#10;{{content}}"></textarea>
+            <p class="form-help">使用 {{content}} 作为网页内容的占位符</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label required">选择 AI 模型</label>
+            <div id="modelsList" class="models-list-radio">
+              <!-- 模型选项将动态生成 -->
+            </div>
+            <p class="form-help">请选择一个模型用于此代理</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label required">工作模式</label>
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="agentMode" value="document" id="agentModeDocument" checked>
+                <span>文档生成模式</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="agentMode" value="chat" id="agentModeChat">
+                <span>聊天模式</span>
+              </label>
+            </div>
+            <p class="form-help">文档生成模式：以网页内容作为输入；聊天模式：以用户输入作为输入</p>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="enableKnowledgeBase">
+              <span>启用知识库</span>
+            </label>
+            <p class="form-help">启用后，生成文档时会自动查询知识库获取相关内容</p>
+          </div>
+
+          <div class="form-group knowledge-base-select-group hidden" id="knowledgeBaseSelectGroup">
+            <label class="form-label">选择知识库</label>
+            <select class="form-select" id="knowledgeBaseSelect">
+              <option value="">请选择知识库...</option>
+            </select>
+            <div class="kb-info" id="kbInfo" style="margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+              <!-- 知识库信息将显示在这里 -->
+            </div>
+          </div>
+
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelAgentBtn">取消</button>
+        <button class="btn btn-primary" id="saveAgentBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="options.js"></script>
+</body>
+</html>
+
