@@ -785,6 +785,10 @@ body {
   padding: 12px;
   overflow-x: auto;
   margin: 1em 0;
+  white-space: pre-wrap; /* 保留换行和空格，但允许自动换行 */
+  word-wrap: break-word;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  line-height: 1.5;
 }
 
 .markdown-content pre code,

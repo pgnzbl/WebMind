@@ -25,9 +25,14 @@ export function renderMarkdown(markdown) {
   // 1. 转义 HTML（但保留换行符）
   // html = escapeHtml(html); // 暂不转义，因为我们要插入 HTML 标签
   
-  // 2. 处理代码块 ```code```
-  html = html.replace(/```([\s\S]*?)```/g, (match, code) => {
-    return `<pre><code>${escapeHtml(code.trim())}</code></pre>`;
+  // 2. 处理代码块 ```code``` (先用占位符保护，避免被后续处理破坏)
+  const codeBlocks = [];
+  html = html.replace(/```([\w\-]*)\n?([\s\S]*?)```/g, (match, lang, code) => {
+    const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
+    // 保留代码块内的换行符，不要 trim
+    const codeHtml = `<pre><code class="language-${lang || 'plaintext'}">${escapeHtml(code)}</code></pre>`;
+    codeBlocks.push(codeHtml);
+    return placeholder;
   });
   
   // 3. 处理图片 ![alt](url)
@@ -98,6 +103,11 @@ export function renderMarkdown(markdown) {
   
   // 16. 处理单个换行符为 <br>
   html = html.replace(/\n/g, '<br/>');
+  
+  // 17. 恢复代码块（代码块内的换行已被保护，不会变成 <br/>）
+  codeBlocks.forEach((codeHtml, index) => {
+    html = html.replace(`__CODE_BLOCK_${index}__`, codeHtml);
+  });
   
   return html;
 }
