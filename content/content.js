@@ -6,7 +6,121 @@
 console.log('WebMind Content Script loaded');
 
 /**
- * 提取网页主要内容
+ * 将 DOM 节点转换为 Markdown
+ */
+function nodeToMarkdown(node, baseUrl) {
+  if (!node) return '';
+  
+  // 文本节点
+  if (node.nodeType === Node.TEXT_NODE) {
+    return node.textContent.trim();
+  }
+  
+  // 元素节点
+  if (node.nodeType === Node.ELEMENT_NODE) {
+    const tagName = node.tagName.toLowerCase();
+    
+    // 跳过不需要的元素
+    const skipTags = ['script', 'style', 'nav', 'header', 'footer', 'iframe'];
+    if (skipTags.includes(tagName)) {
+      return '';
+    }
+    
+    // 处理子节点
+    const childrenMarkdown = Array.from(node.childNodes)
+      .map(child => nodeToMarkdown(child, baseUrl))
+      .filter(text => text.trim())
+      .join(' ');
+    
+    // 根据标签类型转换为 Markdown
+    switch (tagName) {
+      case 'h1':
+        return `\n\n# ${childrenMarkdown}\n\n`;
+      case 'h2':
+        return `\n\n## ${childrenMarkdown}\n\n`;
+      case 'h3':
+        return `\n\n### ${childrenMarkdown}\n\n`;
+      case 'h4':
+        return `\n\n#### ${childrenMarkdown}\n\n`;
+      case 'h5':
+        return `\n\n##### ${childrenMarkdown}\n\n`;
+      case 'h6':
+        return `\n\n###### ${childrenMarkdown}\n\n`;
+      
+      case 'p':
+        return `\n\n${childrenMarkdown}\n\n`;
+      
+      case 'br':
+        return '\n';
+      
+      case 'strong':
+      case 'b':
+        return `**${childrenMarkdown}**`;
+      
+      case 'em':
+      case 'i':
+        return `*${childrenMarkdown}*`;
+      
+      case 'code':
+        return `\`${childrenMarkdown}\``;
+      
+      case 'pre':
+        return `\n\n\`\`\`\n${childrenMarkdown}\n\`\`\`\n\n`;
+      
+      case 'blockquote':
+        return `\n\n> ${childrenMarkdown}\n\n`;
+      
+      case 'ul':
+      case 'ol':
+        return `\n${childrenMarkdown}\n`;
+      
+      case 'li':
+        return `\n- ${childrenMarkdown}`;
+      
+      case 'a':
+        const href = node.getAttribute('href');
+        if (href && !href.startsWith('#')) {
+          try {
+            const absoluteUrl = new URL(href, baseUrl);
+            return `[${childrenMarkdown}](${absoluteUrl.href})`;
+          } catch (e) {
+            return childrenMarkdown;
+          }
+        }
+        return childrenMarkdown;
+      
+      case 'img':
+        const src = node.getAttribute('src');
+        const alt = node.getAttribute('alt') || '图片';
+        if (src) {
+          try {
+            const absoluteUrl = new URL(src, baseUrl);
+            return `\n\n![${alt}](${absoluteUrl.href})\n\n`;
+          } catch (e) {
+            return '';
+          }
+        }
+        return '';
+      
+      case 'hr':
+        return '\n\n---\n\n';
+      
+      case 'div':
+      case 'section':
+      case 'article':
+      case 'main':
+        return childrenMarkdown;
+      
+      default:
+        return childrenMarkdown;
+    }
+  }
+  
+  return '';
+}
+
+/**
+ * 提取网页主要内容（Markdown 格式）
  */
 function extractContent() {
   // 移除不需要的元素
@@ -47,13 +161,14 @@ function extractContent() {
   // 如果没有找到主要内容区域，使用整个 body
   const contentElement = mainContent || clone;
   
-  // 提取文本
-  let text = contentElement.innerText || contentElement.textContent;
+  // 转换为 Markdown 格式
+  const baseUrl = window.location.href;
+  let markdown = nodeToMarkdown(contentElement, baseUrl);
   
-  // 清理文本
-  text = text
-    .replace(/\n{3,}/g, '\n\n')  // 移除多余的空行
-    .replace(/[ \t]+/g, ' ')     // 合并多余的空格
+  // 清理 Markdown（移除多余的空行，但保留图片前后的换行）
+  markdown = markdown
+    .replace(/\n{4,}/g, '\n\n\n')  // 最多保留 2 个连续换行
+    .replace(/[ \t]+/g, ' ')       // 合并多余的空格
     .trim();
   
   // 提取元数据
@@ -66,49 +181,16 @@ function extractContent() {
     keywords: document.querySelector('meta[name="keywords"]')?.content || ''
   };
   
-  // 提取链接
-  const links = [];
-  contentElement.querySelectorAll('a[href]').forEach(link => {
-    const href = link.getAttribute('href');
-    const text = link.textContent.trim();
-    if (href && text && !href.startsWith('#')) {
-      try {
-        const absoluteUrl = new URL(href, window.location.href);
-        links.push({
-          text: text,
-          url: absoluteUrl.href
-        });
-      } catch (e) {
-        // 忽略无效的 URL
-      }
-    }
-  });
-  
-  // 提取图片
-  const images = [];
-  contentElement.querySelectorAll('img[src]').forEach(img => {
-    const src = img.getAttribute('src');
-    const alt = img.getAttribute('alt') || '';
-    if (src) {
-      try {
-        const absoluteUrl = new URL(src, window.location.href);
-        images.push({
-          url: absoluteUrl.href,
-          alt: alt
-        });
-      } catch (e) {
-        // 忽略无效的 URL
-      }
-    }
-  });
+  // 统计图片数量（从 Markdown 中提取）
+  const imageMatches = markdown.match(/!\[.*?\]\(.*?\)/g) || [];
+  const imageCount = imageMatches.length;
   
   return {
-    text: text,
+    text: markdown,  // 现在返回 Markdown 格式的文本
     metadata: metadata,
-    links: links.slice(0, 50), // 限制链接数量
-    images: images.slice(0, 20), // 限制图片数量
-    wordCount: text.split(/\s+/).length,
-    charCount: text.length
+    imageCount: imageCount,
+    wordCount: markdown.split(/\s+/).length,
+    charCount: markdown.length
   };
 }
 

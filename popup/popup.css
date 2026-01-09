@@ -644,3 +644,205 @@ body {
   background: var(--secondary-color);
 }
 
+/* ===== Markdown 渲染样式 ===== */
+.markdown-content,
+#streamingContent,
+#resultPreview {
+  line-height: 1.6;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Markdown 标题 */
+.markdown-content h1,
+#streamingContent h1,
+#resultPreview h1 {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border-color);
+  padding-bottom: 0.3em;
+}
+
+.markdown-content h2,
+#streamingContent h2,
+#resultPreview h2 {
+  font-size: 1.3em;
+  font-weight: 600;
+  margin-top: 0.8em;
+  margin-bottom: 0.5em;
+  color: var(--text-primary);
+}
+
+.markdown-content h3,
+#streamingContent h3,
+#resultPreview h3 {
+  font-size: 1.15em;
+  font-weight: 600;
+  margin-top: 0.8em;
+  margin-bottom: 0.5em;
+  color: var(--text-primary);
+}
+
+.markdown-content h4,
+#streamingContent h4,
+#resultPreview h4,
+.markdown-content h5,
+#streamingContent h5,
+#resultPreview h5,
+.markdown-content h6,
+#streamingContent h6,
+#resultPreview h6 {
+  font-size: 1em;
+  font-weight: 600;
+  margin-top: 0.6em;
+  margin-bottom: 0.5em;
+  color: var(--text-primary);
+}
+
+/* Markdown 段落 */
+.markdown-content p,
+#streamingContent p,
+#resultPreview p {
+  margin-bottom: 1em;
+  line-height: 1.6;
+}
+
+/* Markdown 图片 - 关键样式 */
+.markdown-content img,
+.md-image,
+#streamingContent img,
+#resultPreview img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1em auto;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.markdown-content img:hover,
+.md-image:hover,
+#streamingContent img:hover,
+#resultPreview img:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Markdown 链接 */
+.markdown-content a,
+#streamingContent a,
+#resultPreview a {
+  color: var(--primary-color);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.markdown-content a:hover,
+#streamingContent a:hover,
+#resultPreview a:hover {
+  border-bottom-color: var(--primary-color);
+}
+
+/* Markdown 粗体和斜体 */
+.markdown-content strong,
+#streamingContent strong,
+#resultPreview strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.markdown-content em,
+#streamingContent em,
+#resultPreview em {
+  font-style: italic;
+}
+
+/* Markdown 行内代码 */
+.markdown-content code,
+#streamingContent code,
+#resultPreview code {
+  background: var(--bg-secondary);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.9em;
+  color: #e83e8c;
+}
+
+/* Markdown 代码块 */
+.markdown-content pre,
+#streamingContent pre,
+#resultPreview pre {
+  background: #f6f8fa;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 12px;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.markdown-content pre code,
+#streamingContent pre code,
+#resultPreview pre code {
+  background: transparent;
+  padding: 0;
+  color: var(--text-primary);
+  font-size: 0.85em;
+}
+
+/* Markdown 引用块 */
+.markdown-content blockquote,
+#streamingContent blockquote,
+#resultPreview blockquote {
+  border-left: 4px solid var(--primary-color);
+  padding-left: 1em;
+  margin: 1em 0;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Markdown 列表 */
+.markdown-content ul,
+#streamingContent ul,
+#resultPreview ul {
+  list-style-type: disc;
+  padding-left: 2em;
+  margin: 0.5em 0;
+}
+
+.markdown-content ol,
+#streamingContent ol,
+#resultPreview ol {
+  list-style-type: decimal;
+  padding-left: 2em;
+  margin: 0.5em 0;
+}
+
+.markdown-content li,
+#streamingContent li,
+#resultPreview li {
+  margin-bottom: 0.3em;
+  line-height: 1.6;
+}
+
+/* Markdown 水平分割线 */
+.markdown-content hr,
+#streamingContent hr,
+#resultPreview hr {
+  border: none;
+  border-top: 2px solid var(--border-color);
+  margin: 1.5em 0;
+}
+
+/* 移除多余的 br 标签产生的空白 */
+.markdown-content br + br,
+#streamingContent br + br,
+#resultPreview br + br {
+  display: none;
+}

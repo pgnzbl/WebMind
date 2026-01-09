@@ -1,7 +1,7 @@
 {
   "name": "webmind",
-  "version": "2.0.0",
-  "description": "网页智能助手 - 集成多个 AI 大模型，将网页内容转换为结构化文档",
+  "version": "2.0.1",
+  "description": "网页智能助手 - 集成多个 AI 大模型，支持图文混排的智能文档生成",
   "type": "module",
   "scripts": {
     "dev": "echo 'Load unpacked extension in Chrome from current directory'",

@@ -27,17 +27,19 @@
 - **API 密钥认证**：支持后端 API 密钥安全认证
 
 ### 🌊 实时流式输出
-- AI 生成内容实时显示
+- AI 生成内容实时显示，支持 Markdown 渲染
+- 图片实时加载和显示
 - 打字机效果和动画
 - 随时停止或重新生成
 - 完整的进度反馈
 - 智能超时检测机制
 
-### 📄 灵活的文档导出
-- Markdown 格式
-- Word 格式
-- 智能文件命名
-- 生成后自由选择格式
+### 📄 强大的文档导出
+- **Markdown 格式**：保留图片链接，支持所有 Markdown 编辑器
+- **Word 格式（.docx）**：真正的 Open XML 格式，图片自动下载并嵌入
+- **图文混排**：智能提取网页图片，保持原始位置和格式
+- **实时预览**：Markdown 渲染，图片即时显示
+- **智能文件命名**：基于网页标题和时间戳
 
 ### 📊 历史记录管理
 - 查看所有生成历史
@@ -195,7 +197,10 @@ WebMind/
 │   ├── models.js         # 数据模型
 │   ├── storage.js        # 存储管理
 │   ├── kb-service.js     # 知识库服务（RAG）
-│   └── utils.js          # 工具函数
+│   ├── utils.js          # 工具函数
+│   ├── markdown-renderer.js  # Markdown 渲染器
+│   ├── word-generator.js     # DOCX 文档生成器
+│   └── jszip.min.js      # JSZip 库（生成 .docx）
 └── icons/                 # 图标资源
 ```
 
@@ -205,6 +210,9 @@ WebMind/
 - **存储**: Chrome Storage API
 - **通信**: Chrome Message Passing + Long-lived Connections
 - **模块化**: ES6 Modules
+- **文档处理**: Markdown 解析 + Open XML (DOCX)
+- **图片处理**: Fetch API + Blob + Base64
+- **ZIP 压缩**: JSZip 3.10.1
 - **知识库后端**: [RagBackend](https://github.com/pgnzbl/RagBackend) (FastAPI + ChromaDB + Sentence-Transformers)
 
 ## 🔐 安全性
@@ -282,7 +290,47 @@ WebMind/
 - `qwen-plus` - 上一代平衡版
 - `qwen-turbo` - 上一代快速版
 
+### Q: Word 导出的图片为什么无法显示？
+**A**: 可能原因和解决方案：
+1. **图片源网站设置了防盗链**：跨域限制导致下载失败，文档中会显示 `[图片加载失败]`
+2. **网络连接问题**：确保网络稳定，图片下载需要时间
+3. **图片格式不支持**：支持 PNG、JPEG、GIF、BMP，其他格式可能失败
+4. **文件过大**：建议单个文档图片总大小 < 20MB
+
+### Q: Markdown 导出和 Word 导出有什么区别？
+**A**: 
+- **Markdown (.md)**：
+  - ✅ 文件小，导出快
+  - ✅ 图片以链接形式存在
+  - ⚠️ 需要网络访问图片
+  - 适合：在线分享、版本控制
+  
+- **Word (.docx)**：
+  - ✅ 图片完整嵌入，可离线查看
+  - ✅ 真正的 Open XML 格式
+  - ✅ 完美兼容 Office/WPS
+  - ⚠️ 文件较大，导出需时间
+  - 适合：正式文档、离线使用
+
 ## 🔄 更新日志
+
+### v2.0.1 (2025-01-09)
+- 🖼️ **图片智能处理功能**
+  - 📸 自动提取网页图片，保持原始位置
+  - 🎨 Markdown 内容智能转换（`<img>` → `![alt](src)`）
+  - 👁️ 实时预览：流式输出和结果页面支持图片显示
+  - 📥 Markdown 导出：保留图片链接
+  - 📄 Word 导出升级：
+    - ✅ 真正的 .docx 格式（Open XML 标准）
+    - 📦 图片自动下载并嵌入文档
+    - 🎯 图片尺寸智能适配
+    - 💾 完美兼容 Word/WPS/LibreOffice
+  - 📊 导出进度实时反馈
+- 🛠️ **技术优化**
+  - 引入 JSZip 3.10.1 生成标准 DOCX
+  - 自定义轻量级 Markdown 渲染器
+  - DOM 转 Markdown 智能解析器
+  - 图片下载和 Blob 处理优化
 
 ### v2.0.0 (2024-12-19)
 - ✨ **重大更新：知识库（RAG）功能**

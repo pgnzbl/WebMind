@@ -4,6 +4,8 @@
 
 import storage from '../shared/storage.js';
 import { formatDate, truncate, downloadFile, copyToClipboard } from '../shared/utils.js';
+import { renderMarkdown } from '../shared/markdown-renderer.js';
+import { generateWordWithImages } from '../shared/word-generator.js';
 
 // DOM 元素
 const elements = {
@@ -508,7 +510,8 @@ async function handleStreamingGenerate(agentId, content, tab, isChatMode = false
       resetTimeout(); // 重置超时计时器
       
       fullContent += message.data;
-      elements.streamingContent.textContent = fullContent;
+      // 使用 Markdown 渲染（支持图片显示）
+      elements.streamingContent.innerHTML = renderMarkdown(fullContent);
       
       // 自动滚动到底部
       elements.streamingContent.scrollTop = elements.streamingContent.scrollHeight;
@@ -634,11 +637,12 @@ function setProgress(percent, text) {
 }
 
 /**
- * 显示结果
+ * 显示结果（Markdown 渲染）
  */
 function displayResult(result) {
   elements.resultSection.classList.remove('hidden');
-  elements.resultPreview.textContent = result.content;
+  // 使用 Markdown 渲染（支持图片、链接等）
+  elements.resultPreview.innerHTML = renderMarkdown(result.content);
 }
 
 /**
@@ -659,22 +663,55 @@ async function handleCopyResult() {
 /**
  * 下载文档
  */
-function handleDownload(format) {
+async function handleDownload(format) {
   if (!currentResult) return;
-  
-  const extension = format === 'docx' ? 'docx' : 'md';
-  const mimeType = format === 'docx' 
-    ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    : 'text/markdown';
   
   // 生成安全的文件名
   const safeTitle = (currentTab?.title || 'document')
     .replace(/[<>:"/\\|?*]/g, '')
     .substring(0, 50);
   const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-  const filename = `${safeTitle}_${timestamp}.${extension}`;
   
-  downloadFile(currentResult.content, filename, mimeType);
+  if (format === 'docx') {
+    // Word 导出（包含图片嵌入）
+    const filename = `${safeTitle}_${timestamp}.docx`;
+    
+    // 禁用下载按钮，显示进度
+    const docxBtn = elements.downloadDocxBtn;
+    const originalText = docxBtn.textContent;
+    docxBtn.disabled = true;
+    docxBtn.textContent = '准备中...';
+    
+    try {
+      await generateWordWithImages(
+        currentResult.content, 
+        filename,
+        (progress) => {
+          // 更新按钮文本显示进度
+          docxBtn.textContent = `${progress.message} ${Math.round(progress.progress)}%`;
+        }
+      );
+      
+      // 成功提示
+      docxBtn.textContent = '✅ 完成';
+      setTimeout(() => {
+        docxBtn.textContent = originalText;
+        docxBtn.disabled = false;
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Failed to generate Word document:', error);
+      alert('Word 导出失败: ' + error.message);
+      docxBtn.textContent = originalText;
+      docxBtn.disabled = false;
+    }
+    
+  } else {
+    // Markdown 导出（直接下载）
+    const filename = `${safeTitle}_${timestamp}.md`;
+    const mimeType = 'text/markdown';
+    downloadFile(currentResult.content, filename, mimeType);
+  }
 }
 
 /**
