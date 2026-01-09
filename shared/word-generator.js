@@ -64,6 +64,32 @@ function parseMarkdownToBlocks(markdown) {
     
     if (!trimmed) continue;
     
+    // 代码块 ```code```
+    if (trimmed === '```' || trimmed.match(/^```[\w\-]*$/)) {
+      const codeLines = [];
+      const langMatch = trimmed.match(/^```([\w\-]+)$/);
+      const language = langMatch ? langMatch[1] : '';
+      i++; // 跳过开始的 ```
+      
+      while (i < lines.length) {
+        const codeLine = lines[i];
+        if (codeLine.trim() === '```') {
+          i++; // 跳过结束的 ```
+          break;
+        }
+        codeLines.push(codeLine);
+        i++;
+      }
+      i--; // 回退一行（for 循环会自动 +1）
+      
+      blocks.push({
+        type: 'code',
+        language: language,
+        content: codeLines.join('\n')
+      });
+      continue;
+    }
+    
     // 标题
     const headingMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
     if (headingMatch) {
@@ -86,7 +112,51 @@ function parseMarkdownToBlocks(markdown) {
       continue;
     }
     
-    // 列表项
+    // 水平线 --- 或 ***
+    if (trimmed.match(/^[-*]{3,}$/)) {
+      blocks.push({
+        type: 'hr'
+      });
+      continue;
+    }
+    
+    // 引用块 > text
+    if (trimmed.match(/^>\s+/)) {
+      const quoteLines = [];
+      while (i < lines.length) {
+        const quoteLine = lines[i].trim();
+        const match = quoteLine.match(/^>\s+(.+)$/);
+        if (!match) break;
+        quoteLines.push(match[1]);
+        i++;
+      }
+      i--; // 回退一行
+      blocks.push({
+        type: 'blockquote',
+        content: parseInlineFormats(quoteLines.join(' '))
+      });
+      continue;
+    }
+    
+    // 有序列表项 1. 2. 3.
+    if (trimmed.match(/^\d+\.\s+/)) {
+      const listItems = [];
+      while (i < lines.length) {
+        const listLine = lines[i].trim();
+        const match = listLine.match(/^\d+\.\s+(.+)$/);
+        if (!match) break;
+        listItems.push(parseInlineFormats(match[1]));
+        i++;
+      }
+      i--; // 回退一行
+      blocks.push({
+        type: 'orderedList',
+        items: listItems
+      });
+      continue;
+    }
+    
+    // 无序列表项 - 或 *
     if (trimmed.match(/^[-*]\s+/)) {
       const listItems = [];
       while (i < lines.length) {
@@ -373,6 +443,73 @@ function generateImageParagraph(imageIndex, width, height) {
 }
 
 /**
+ * 生成代码块
+ */
+function generateCodeBlock(code, language = '') {
+  let xml = '';
+  
+  // 代码块标题（语言标识）
+  if (language) {
+    xml += `
+    <w:p>
+      <w:pPr>
+        <w:spacing w:before="120" w:after="0" w:line="240" w:lineRule="auto"/>
+        <w:ind w:firstLine="0" w:firstLineChars="0" w:left="0" w:leftChars="0"/>
+        <w:jc w:val="left"/>
+        <w:shd w:val="clear" w:fill="E8E8E8"/>
+      </w:pPr>
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:b/>
+          <w:bCs/>
+          <w:sz w:val="20"/>
+          <w:szCs w:val="20"/>
+          <w:color w:val="666666"/>
+        </w:rPr>
+        <w:t xml:space="preserve">${escapeXml(language)}</w:t>
+      </w:r>
+    </w:p>`;
+  }
+  
+  // 代码内容按行拆分
+  const lines = code.split('\n');
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    
+    xml += `
+    <w:p>
+      <w:pPr>
+        <w:spacing w:before="0" w:after="0" w:line="240" w:lineRule="auto"/>
+        <w:ind w:firstLine="0" w:firstLineChars="0" w:left="240" w:leftChars="100"/>
+        <w:jc w:val="left"/>
+        <w:shd w:val="clear" w:fill="F5F5F5"/>
+      </w:pPr>
+      <w:r>
+        <w:rPr>
+          <w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>
+          <w:sz w:val="20"/>
+          <w:szCs w:val="20"/>
+          <w:color w:val="333333"/>
+        </w:rPr>
+        <w:t xml:space="preserve">${line ? escapeXml(line) : ' '}</w:t>
+      </w:r>
+    </w:p>`;
+  }
+  
+  // 代码块后添加空行
+  xml += `
+    <w:p>
+      <w:pPr>
+        <w:spacing w:before="0" w:after="120"/>
+      </w:pPr>
+    </w:p>`;
+  
+  return xml;
+}
+
+/**
  * 生成 word/document.xml
  */
 function generateDocument(blocks, images) {
@@ -479,6 +616,68 @@ function generateDocument(blocks, images) {
       </w:r>
     </w:p>`;
       }
+    } else if (block.type === 'code') {
+      // 代码块
+      xml += generateCodeBlock(block.content, block.language);
+    } else if (block.type === 'orderedList') {
+      // 有序列表
+      block.items.forEach((item, index) => {
+        xml += `
+    <w:p>
+      <w:pPr>
+        <w:spacing w:before="0" w:after="100" w:line="360" w:lineRule="auto"/>
+        <w:ind w:left="420" w:leftChars="0" w:hanging="420" w:hangingChars="200"/>
+        <w:numPr>
+          <w:ilvl w:val="0"/>
+          <w:numId w:val="2"/>
+        </w:numPr>
+        <w:rPr>
+          <w:rFonts w:ascii="SimSun" w:hAnsi="SimSun" w:eastAsia="SimSun" w:hint="eastAsia"/>
+          <w:sz w:val="24"/>
+          <w:szCs w:val="24"/>
+        </w:rPr>
+      </w:pPr>`;
+        item.forEach(segment => {
+          xml += generateRun(segment);
+        });
+        xml += `
+    </w:p>`;
+      });
+    } else if (block.type === 'blockquote') {
+      // 引用块
+      xml += `
+    <w:p>
+      <w:pPr>
+        <w:spacing w:before="0" w:after="120" w:line="360" w:lineRule="auto"/>
+        <w:ind w:left="420" w:leftChars="200" w:firstLine="0" w:firstLineChars="0"/>
+        <w:jc w:val="left"/>
+        <w:shd w:val="clear" w:fill="F5F5F5"/>
+        <w:rPr>
+          <w:rFonts w:ascii="SimSun" w:hAnsi="SimSun" w:eastAsia="SimSun" w:hint="eastAsia"/>
+          <w:i/>
+          <w:iCs/>
+          <w:color w:val="666666"/>
+          <w:sz w:val="24"/>
+          <w:szCs w:val="24"/>
+        </w:rPr>
+      </w:pPr>`;
+      block.content.forEach(segment => {
+        xml += generateRun(segment);
+      });
+      xml += `
+    </w:p>`;
+    } else if (block.type === 'hr') {
+      // 水平线
+      xml += `
+    <w:p>
+      <w:pPr>
+        <w:spacing w:before="120" w:after="120"/>
+        <w:ind w:firstLine="0" w:firstLineChars="0" w:left="0" w:leftChars="0"/>
+        <w:pBdr>
+          <w:bottom w:val="single" w:sz="6" w:space="1" w:color="CCCCCC"/>
+        </w:pBdr>
+      </w:pPr>
+    </w:p>`;
     }
   });
   
