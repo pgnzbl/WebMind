@@ -18,6 +18,7 @@ const elements = {
   agentsGrid: document.getElementById('agentsGrid'),
   agentsEmpty: document.getElementById('agentsEmpty'),
   createAgentBtn: document.getElementById('createAgentBtn'),
+  createFirstAgentBtn: document.getElementById('createFirstAgentBtn'),
   
   // 提供商配置
   providersList: document.getElementById('providersList'),
@@ -117,6 +118,11 @@ function bindEvents() {
   
   // 创建代理
   elements.createAgentBtn.addEventListener('click', () => openAgentModal());
+  
+  // 创建第一个代理按钮（空状态页面）
+  if (elements.createFirstAgentBtn) {
+    elements.createFirstAgentBtn.addEventListener('click', () => openAgentModal());
+  }
   
   // 保存代理
   elements.saveAgentBtn.addEventListener('click', handleSaveAgent);
