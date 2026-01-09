@@ -3,7 +3,7 @@
  */
 
 import storage from '../shared/storage.js';
-import { formatDate, truncate, downloadFile, copyToClipboard } from '../shared/utils.js';
+import { formatDate, truncate, downloadFile, copyToClipboard, copyAsRichText } from '../shared/utils.js';
 import { renderMarkdown } from '../shared/markdown-renderer.js';
 import { generateWordWithImages } from '../shared/word-generator.js';
 
@@ -29,6 +29,7 @@ const elements = {
   resultSection: document.getElementById('resultSection'),
   resultPreview: document.getElementById('resultPreview'),
   copyResultBtn: document.getElementById('copyResultBtn'),
+  copyRichTextBtn: document.getElementById('copyRichTextBtn'),
   regenerateBtn: document.getElementById('regenerateBtn'),
   downloadMdBtn: document.getElementById('downloadMdBtn'),
   downloadDocxBtn: document.getElementById('downloadDocxBtn'),
@@ -116,6 +117,9 @@ function bindEvents() {
   
   // 复制结果
   elements.copyResultBtn.addEventListener('click', handleCopyResult);
+  
+  // 复制为富文本
+  elements.copyRichTextBtn.addEventListener('click', handleCopyAsRichText);
   
   // 重新生成
   elements.regenerateBtn.addEventListener('click', handleRegenerate);
@@ -657,6 +661,44 @@ async function handleCopyResult() {
     setTimeout(() => {
       elements.copyResultBtn.textContent = '📋';
     }, 2000);
+  }
+}
+
+/**
+ * 复制为富文本（含 base64 图片）
+ */
+async function handleCopyAsRichText() {
+  if (!currentResult) return;
+  
+  const originalText = elements.copyRichTextBtn.textContent;
+  
+  try {
+    // 禁用按钮
+    elements.copyRichTextBtn.disabled = true;
+    elements.copyRichTextBtn.textContent = '准备中...';
+    
+    // 调用富文本复制函数，带进度回调
+    await copyAsRichText(currentResult.content, (current, total, message) => {
+      if (total === 0) {
+        elements.copyRichTextBtn.textContent = message;
+      } else {
+        const percent = Math.round((current / total) * 100);
+        elements.copyRichTextBtn.textContent = `${percent}%`;
+      }
+    });
+    
+    // 成功提示
+    elements.copyRichTextBtn.textContent = '✅';
+    setTimeout(() => {
+      elements.copyRichTextBtn.textContent = originalText;
+      elements.copyRichTextBtn.disabled = false;
+    }, 2000);
+    
+  } catch (error) {
+    console.error('Failed to copy as rich text:', error);
+    alert('复制富文本失败: ' + error.message);
+    elements.copyRichTextBtn.textContent = originalText;
+    elements.copyRichTextBtn.disabled = false;
   }
 }
 

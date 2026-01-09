@@ -244,11 +244,36 @@ body {
   padding: 4px 8px;
   font-size: 16px;
   border-radius: 4px;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 .btn-icon:hover {
   background: var(--bg-secondary);
+}
+
+.btn-icon:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 富文本复制按钮特殊样式 */
+#copyRichTextBtn {
+  position: relative;
+}
+
+#copyRichTextBtn:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: -30px;
+  right: 0;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
 }
 
 /* 页面信息 */

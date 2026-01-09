@@ -313,3 +313,192 @@ export async function batchProcess(items, handler, batchSize = 10) {
   return results;
 }
 
+/**
+ * 下载图片并转换为 base64
+ * @param {string} imageUrl - 图片 URL
+ * @returns {Promise<{base64: string, type: string} | null>}
+ */
+async function downloadImageAsBase64(imageUrl) {
+  try {
+    const response = await fetch(imageUrl, {
+      mode: 'cors',
+      cache: 'default'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const blob = await response.blob();
+    const type = blob.type || 'image/png';
+    
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        resolve({
+          base64: reader.result,
+          type: type
+        });
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error(`Failed to download image ${imageUrl}:`, error);
+    return null;
+  }
+}
+
+/**
+ * 提取 Markdown 中的所有图片 URL
+ * @param {string} markdown - Markdown 文本
+ * @returns {Array<{url: string, alt: string}>}
+ */
+function extractImagesFromMarkdown(markdown) {
+  const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+  const images = [];
+  let match;
+  
+  while ((match = imageRegex.exec(markdown)) !== null) {
+    images.push({
+      alt: match[1] || '图片',
+      url: match[2]
+    });
+  }
+  
+  return images;
+}
+
+/**
+ * 复制为富文本（HTML 格式，图片嵌入为 base64）
+ * @param {string} markdown - Markdown 内容
+ * @param {Function} onProgress - 进度回调函数 (current, total, message)
+ * @returns {Promise<boolean>}
+ */
+export async function copyAsRichText(markdown, onProgress) {
+  try {
+    // 1. 提取所有图片 URL
+    const images = extractImagesFromMarkdown(markdown);
+    onProgress && onProgress(0, images.length, '正在分析图片...');
+    
+    // 2. 下载所有图片并转换为 base64
+    const imageMap = new Map();
+    for (let i = 0; i < images.length; i++) {
+      const image = images[i];
+      onProgress && onProgress(i + 1, images.length, `下载图片 ${i + 1}/${images.length}...`);
+      
+      const imageData = await downloadImageAsBase64(image.url);
+      if (imageData) {
+        imageMap.set(image.url, imageData.base64);
+      }
+    }
+    
+    // 3. 动态导入 marked 库来渲染 Markdown
+    onProgress && onProgress(images.length, images.length, '生成 HTML...');
+    
+    // 使用 marked 库渲染 HTML
+    const { marked } = await import('./marked.min.js');
+    let html = marked.parse(markdown);
+    
+    // 4. 替换 HTML 中的图片 URL 为 base64
+    for (const [url, base64] of imageMap.entries()) {
+      // 匹配 <img src="url" ...> 格式
+      const imgRegex = new RegExp(`<img([^>]*?)src=["']${escapeRegExp(url)}["']([^>]*?)>`, 'g');
+      html = html.replace(imgRegex, `<img$1src="${base64}"$2>`);
+    }
+    
+    // 5. 添加基本样式使富文本更美观
+    const styledHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    margin: 0;
+    padding: 0;
+  }
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 1em 0;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    font-weight: 600;
+  }
+  h1 { font-size: 2em; border-bottom: 2px solid #eee; padding-bottom: 0.3em; }
+  h2 { font-size: 1.5em; }
+  h3 { font-size: 1.25em; }
+  code {
+    background: #f4f4f4;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: "Consolas", "Monaco", monospace;
+  }
+  pre {
+    background: #f4f4f4;
+    padding: 10px;
+    border-radius: 5px;
+    overflow-x: auto;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+  }
+  blockquote {
+    border-left: 4px solid #ddd;
+    margin: 1em 0;
+    padding-left: 1em;
+    color: #666;
+  }
+  ul, ol {
+    padding-left: 2em;
+  }
+  a {
+    color: #0066cc;
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+${html}
+</body>
+</html>`;
+    
+    // 6. 写入剪贴板
+    onProgress && onProgress(images.length, images.length, '复制到剪贴板...');
+    
+    // 使用 Clipboard API 写入富文本
+    const blob = new Blob([styledHtml], { type: 'text/html' });
+    const clipboardItem = new ClipboardItem({
+      'text/html': blob,
+      'text/plain': new Blob([markdown], { type: 'text/plain' })
+    });
+    
+    await navigator.clipboard.write([clipboardItem]);
+    
+    onProgress && onProgress(images.length, images.length, '复制成功！');
+    return true;
+  } catch (error) {
+    console.error('Failed to copy as rich text:', error);
+    throw error;
+  }
+}
+
+/**
+ * 转义正则表达式特殊字符
+ * @param {string} string 
+ * @returns {string}
+ */
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
