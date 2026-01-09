@@ -1,7 +1,11 @@
 /**
- * 轻量级 Markdown 渲染器
- * 支持基本的 Markdown 语法，特别优化图片显示
+ * Markdown 渲染器
+ * 基于 marked.js v11.1.1
+ * 轻量级、高性能、完整支持标准 Markdown 语法
  */
+
+// 导入 marked.js
+import { marked } from './marked.min.js';
 
 /**
  * 转义 HTML 特殊字符
@@ -13,6 +17,22 @@ function escapeHtml(text) {
 }
 
 /**
+ * 配置 marked.js
+ */
+marked.setOptions({
+  breaks: true,          // 支持换行（GFM 风格）
+  gfm: true,            // GitHub Flavored Markdown
+  pedantic: false,       // 不使用原始 markdown.pl 的怪异行为
+  sanitize: false,       // 不自动清理 HTML（我们自己处理）
+  smartLists: true,      // 智能列表行为
+  smartypants: false,    // 不转换引号等
+  highlight: function(code, lang) {
+    // 代码高亮处理（保持原样，未来可扩展 highlight.js）
+    return escapeHtml(code);
+  }
+});
+
+/**
  * 渲染 Markdown 为 HTML
  * @param {string} markdown - Markdown 文本
  * @returns {string} HTML 字符串
@@ -20,96 +40,13 @@ function escapeHtml(text) {
 export function renderMarkdown(markdown) {
   if (!markdown) return '';
   
-  let html = markdown;
-  
-  // 1. 转义 HTML（但保留换行符）
-  // html = escapeHtml(html); // 暂不转义，因为我们要插入 HTML 标签
-  
-  // 2. 处理代码块 ```code``` (先用占位符保护，避免被后续处理破坏)
-  const codeBlocks = [];
-  html = html.replace(/```([\w\-]*)\n?([\s\S]*?)```/g, (match, lang, code) => {
-    const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
-    // 保留代码块内的换行符，不要 trim
-    const codeHtml = `<pre><code class="language-${lang || 'plaintext'}">${escapeHtml(code)}</code></pre>`;
-    codeBlocks.push(codeHtml);
-    return placeholder;
-  });
-  
-  // 3. 处理图片 ![alt](url)
-  html = html.replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, url) => {
-    return `<img src="${escapeHtml(url)}" alt="${escapeHtml(alt)}" class="md-image" loading="lazy" />`;
-  });
-  
-  // 4. 处理链接 [text](url)
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
-    return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(text)}</a>`;
-  });
-  
-  // 5. 处理标题
-  html = html.replace(/^######\s+(.+)$/gm, '<h6>$1</h6>');
-  html = html.replace(/^#####\s+(.+)$/gm, '<h5>$1</h5>');
-  html = html.replace(/^####\s+(.+)$/gm, '<h4>$1</h4>');
-  html = html.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
-  html = html.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
-  html = html.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
-  
-  // 6. 处理粗体 **text** 或 __text__
-  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
-  
-  // 7. 处理斜体 *text* 或 _text_
-  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-  html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
-  
-  // 8. 处理行内代码 `code`
-  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-  
-  // 9. 处理引用块 > text
-  html = html.replace(/^>\s+(.+)$/gm, '<blockquote>$1</blockquote>');
-  
-  // 10. 处理水平分割线 ---
-  html = html.replace(/^---$/gm, '<hr/>');
-  
-  // 11. 处理有序列表项 1. item, 2. item (使用临时标记 <oli>)
-  html = html.replace(/^(\d+)\.\s+(.+)$/gm, '<oli>$2</oli>');
-  
-  // 12. 处理无序列表项 - item
-  html = html.replace(/^-\s+(.+)$/gm, '<li>$1</li>');
-  
-  // 13. 将连续的 <oli> 包裹在 <ol> 中，并转换为 <li>
-  html = html.replace(/(<oli>[\s\S]*?<\/oli>\n?)+/g, (match) => {
-    const items = match.replace(/<oli>/g, '<li>').replace(/<\/oli>/g, '</li>');
-    return `<ol>${items}</ol>`;
-  });
-  
-  // 14. 将连续的 <li> 包裹在 <ul> 中
-  html = html.replace(/(<li>[\s\S]*?<\/li>\n?)+/g, (match) => {
-    return `<ul>${match}</ul>`;
-  });
-  
-  // 15. 处理段落（连续的非标签文本）
-  html = html.split('\n\n').map(block => {
-    block = block.trim();
-    if (!block) return '';
-    
-    // 如果已经是 HTML 标签，不要包裹 <p>
-    if (block.match(/^<(h[1-6]|pre|ul|ol|blockquote|hr|img)/)) {
-      return block;
-    }
-    
-    // 否则包裹为段落
-    return `<p>${block}</p>`;
-  }).join('\n');
-  
-  // 16. 处理单个换行符为 <br>
-  html = html.replace(/\n/g, '<br/>');
-  
-  // 17. 恢复代码块（代码块内的换行已被保护，不会变成 <br/>）
-  codeBlocks.forEach((codeHtml, index) => {
-    html = html.replace(`__CODE_BLOCK_${index}__`, codeHtml);
-  });
-  
-  return html;
+  try {
+    return marked.parse(markdown);
+  } catch (error) {
+    console.error('Markdown 渲染失败:', error);
+    // 出错时返回转义后的原文
+    return `<p>${escapeHtml(markdown)}</p>`;
+  }
 }
 
 /**
@@ -128,35 +65,60 @@ export function renderToElement(element, markdown) {
 }
 
 /**
- * 从 Markdown 中提取纯文本（移除图片等）
+ * 从 Markdown 中提取纯文本（移除格式）
  * @param {string} markdown - Markdown 文本
  * @returns {string} 纯文本
  */
 export function extractPlainText(markdown) {
   if (!markdown) return '';
   
-  let text = markdown;
-  
-  // 移除图片
-  text = text.replace(/!\[.*?\]\(.*?\)/g, '[图片]');
-  
-  // 移除链接但保留文本
-  text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-  
-  // 移除标题标记
-  text = text.replace(/^#{1,6}\s+/gm, '');
-  
-  // 移除粗体/斜体标记
-  text = text.replace(/\*\*([^*]+)\*\*/g, '$1');
-  text = text.replace(/\*([^*]+)\*/g, '$1');
-  text = text.replace(/__([^_]+)__/g, '$1');
-  text = text.replace(/_([^_]+)_/g, '$1');
-  
-  // 移除代码标记
-  text = text.replace(/`([^`]+)`/g, '$1');
-  
-  // 移除引用标记
-  text = text.replace(/^>\s+/gm, '');
-  
-  return text.trim();
+  try {
+    // 使用 marked 的 lexer 提取文本
+    const tokens = marked.lexer(markdown);
+    let text = '';
+    
+    function extractFromTokens(tokens) {
+      for (const token of tokens) {
+        if (token.type === 'text') {
+          text += token.text || '';
+        } else if (token.type === 'paragraph') {
+          text += token.text || token.raw || '';
+          text += '\n';
+        } else if (token.type === 'heading') {
+          text += token.text || token.raw || '';
+          text += '\n';
+        } else if (token.type === 'list') {
+          if (token.items) {
+            extractFromTokens(token.items);
+          }
+        } else if (token.type === 'list_item') {
+          text += '• ' + (token.text || token.raw || '') + '\n';
+        } else if (token.type === 'code') {
+          text += token.text || '';
+          text += '\n';
+        } else if (token.type === 'codespan') {
+          text += token.text || '';
+        } else if (token.tokens) {
+          extractFromTokens(token.tokens);
+        }
+      }
+    }
+    
+    extractFromTokens(tokens);
+    return text.trim();
+  } catch (error) {
+    console.error('提取纯文本失败:', error);
+    // 简单回退：移除 Markdown 标记
+    return markdown
+      .replace(/!\[.*?\]\(.*?\)/g, '[图片]')
+      .replace(/\[([^\]]+)\]\(.*?\)/g, '$1')
+      .replace(/```[\s\S]*?```/g, '[代码块]')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/^#{1,6}\s+/gm, '')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/__([^_]+)__/g, '$1')
+      .replace(/_([^_]+)_/g, '$1')
+      .trim();
+  }
 }
