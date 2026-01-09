@@ -65,15 +65,24 @@ export function renderMarkdown(markdown) {
   // 10. 处理水平分割线 ---
   html = html.replace(/^---$/gm, '<hr/>');
   
-  // 11. 处理列表项 - item
+  // 11. 处理有序列表项 1. item, 2. item (使用临时标记 <oli>)
+  html = html.replace(/^(\d+)\.\s+(.+)$/gm, '<oli>$2</oli>');
+  
+  // 12. 处理无序列表项 - item
   html = html.replace(/^-\s+(.+)$/gm, '<li>$1</li>');
   
-  // 12. 将连续的 <li> 包裹在 <ul> 中
-  html = html.replace(/(<li>.*?<\/li>\n?)+/gs, (match) => {
+  // 13. 将连续的 <oli> 包裹在 <ol> 中，并转换为 <li>
+  html = html.replace(/(<oli>[\s\S]*?<\/oli>\n?)+/g, (match) => {
+    const items = match.replace(/<oli>/g, '<li>').replace(/<\/oli>/g, '</li>');
+    return `<ol>${items}</ol>`;
+  });
+  
+  // 14. 将连续的 <li> 包裹在 <ul> 中
+  html = html.replace(/(<li>[\s\S]*?<\/li>\n?)+/g, (match) => {
     return `<ul>${match}</ul>`;
   });
   
-  // 13. 处理段落（连续的非标签文本）
+  // 15. 处理段落（连续的非标签文本）
   html = html.split('\n\n').map(block => {
     block = block.trim();
     if (!block) return '';
@@ -87,7 +96,7 @@ export function renderMarkdown(markdown) {
     return `<p>${block}</p>`;
   }).join('\n');
   
-  // 14. 处理单个换行符为 <br>
+  // 16. 处理单个换行符为 <br>
   html = html.replace(/\n/g, '<br/>');
   
   return html;

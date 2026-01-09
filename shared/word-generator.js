@@ -269,20 +269,40 @@ function generateDocumentRels(imageCount) {
 function generateRun(segment) {
   let xml = '<w:r>';
   
-  if (segment.bold || segment.italic || segment.code) {
-    xml += '<w:rPr>';
-    if (segment.bold) xml += '<w:b/>';
-    if (segment.italic) xml += '<w:i/>';
-    if (segment.code) {
-      xml += '<w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/>';
-      xml += '<w:shd w:val="clear" w:fill="F3F3F3"/>';
-    }
-    if (segment.link) {
-      xml += '<w:color w:val="0563C1"/>';
-      xml += '<w:u w:val="single"/>';
-    }
-    xml += '</w:rPr>';
+  // 总是添加字体属性
+  xml += '<w:rPr>';
+  
+  // 字体设置：代码用 Consolas，其他用宋体
+  if (segment.code) {
+    xml += '<w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:eastAsia="Consolas"/>';
+    xml += '<w:shd w:val="clear" w:fill="F3F3F3"/>';
+  } else {
+    xml += '<w:rFonts w:ascii="SimSun" w:hAnsi="SimSun" w:eastAsia="SimSun" w:hint="eastAsia"/>';
   }
+  
+  // 加粗
+  if (segment.bold) {
+    xml += '<w:b/>';
+    xml += '<w:bCs/>';
+  }
+  
+  // 斜体
+  if (segment.italic) {
+    xml += '<w:i/>';
+    xml += '<w:iCs/>';
+  }
+  
+  // 链接样式
+  if (segment.link) {
+    xml += '<w:color w:val="0563C1"/>';
+    xml += '<w:u w:val="single"/>';
+  }
+  
+  // 字号：小四 12pt = 24 half-points
+  xml += '<w:sz w:val="24"/>';
+  xml += '<w:szCs w:val="24"/>';
+  
+  xml += '</w:rPr>';
   
   xml += `<w:t xml:space="preserve">${escapeXml(segment.text)}</w:t>`;
   xml += '</w:r>';
@@ -312,6 +332,8 @@ function generateImageParagraph(imageIndex, width, height) {
     <w:p>
       <w:pPr>
         <w:jc w:val="center"/>
+        <w:spacing w:before="120" w:after="240" w:line="360" w:lineRule="auto"/>
+        <w:ind w:firstLine="0" w:firstLineChars="0" w:left="0" w:leftChars="0"/>
       </w:pPr>
       <w:r>
         <w:rPr/>
@@ -366,15 +388,27 @@ function generateDocument(blocks, images) {
   
   blocks.forEach(block => {
     if (block.type === 'heading') {
-      const fontSize = [48, 36, 32, 28, 24, 20][block.level - 1];
+      // 中文文档标准字号（半角点数）
+      // H1(##): 三号 16pt = 32, H2(###): 四号 14pt = 28, H3(####): 小四 12pt = 24
+      // H4-H6: 小四 12pt = 24
+      const fontSizes = [32, 28, 24, 24, 24, 24]; // 对应 H1-H6
+      const fontSize = fontSizes[block.level - 1];
+      
+      // 标题后间距：一级标题 360twips(1.5行)，其他标题 240twips(1行)
+      const spacingAfter = block.level === 1 ? 360 : 240;
+      
       xml += `
     <w:p>
       <w:pPr>
-        <w:pStyle w:val="Heading${block.level}"/>
+        <w:spacing w:before="0" w:after="${spacingAfter}" w:line="360" w:lineRule="auto"/>
+        <w:ind w:firstLine="0" w:firstLineChars="0" w:left="0" w:leftChars="0"/>
+        <w:jc w:val="left"/>
       </w:pPr>
       <w:r>
         <w:rPr>
+          <w:rFonts w:ascii="SimHei" w:hAnsi="SimHei" w:eastAsia="SimHei" w:hint="eastAsia"/>
           <w:b/>
+          <w:bCs/>
           <w:sz w:val="${fontSize}"/>
           <w:szCs w:val="${fontSize}"/>
         </w:rPr>
@@ -383,7 +417,17 @@ function generateDocument(blocks, images) {
     </w:p>`;
     } else if (block.type === 'paragraph') {
       xml += `
-    <w:p>`;
+    <w:p>
+      <w:pPr>
+        <w:spacing w:before="0" w:after="120" w:line="360" w:lineRule="auto"/>
+        <w:ind w:firstLine="0" w:firstLineChars="0" w:left="0" w:leftChars="0"/>
+        <w:jc w:val="left"/>
+        <w:rPr>
+          <w:rFonts w:ascii="SimSun" w:hAnsi="SimSun" w:eastAsia="SimSun" w:hint="eastAsia"/>
+          <w:sz w:val="24"/>
+          <w:szCs w:val="24"/>
+        </w:rPr>
+      </w:pPr>`;
       block.content.forEach(segment => {
         xml += generateRun(segment);
       });
@@ -394,11 +438,17 @@ function generateDocument(blocks, images) {
         xml += `
     <w:p>
       <w:pPr>
-        <w:pStyle w:val="ListParagraph"/>
+        <w:spacing w:before="0" w:after="100" w:line="360" w:lineRule="auto"/>
+        <w:ind w:left="420" w:leftChars="0" w:hanging="420" w:hangingChars="200"/>
         <w:numPr>
           <w:ilvl w:val="0"/>
           <w:numId w:val="1"/>
         </w:numPr>
+        <w:rPr>
+          <w:rFonts w:ascii="SimSun" w:hAnsi="SimSun" w:eastAsia="SimSun" w:hint="eastAsia"/>
+          <w:sz w:val="24"/>
+          <w:szCs w:val="24"/>
+        </w:rPr>
       </w:pPr>`;
         item.forEach(segment => {
           xml += generateRun(segment);
@@ -415,6 +465,11 @@ function generateDocument(blocks, images) {
         // 图片加载失败，显示占位文本
         xml += `
     <w:p>
+      <w:pPr>
+        <w:spacing w:before="0" w:after="120" w:line="360" w:lineRule="auto"/>
+        <w:ind w:firstLine="0" w:firstLineChars="0" w:left="0" w:leftChars="0"/>
+        <w:jc w:val="left"/>
+      </w:pPr>
       <w:r>
         <w:rPr>
           <w:color w:val="999999"/>
