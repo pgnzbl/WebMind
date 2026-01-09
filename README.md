@@ -385,18 +385,6 @@ cd WebMind
 chrome://extensions/ → 加载已解压的扩展程序
 ```
 
-### 提交规范
-```
-feat: 新功能
-fix: Bug 修复
-docs: 文档更新
-style: 代码格式
-refactor: 重构
-perf: 性能优化
-test: 测试
-chore: 构建/工具
-```
-
 ## 🔗 相关项目
 
 - **RagBackend**: [https://github.com/pgnzbl/RagBackend](https://github.com/pgnzbl/RagBackend)
@@ -404,16 +392,6 @@ chore: 构建/工具
   - 基于 FastAPI + ChromaDB + Sentence-Transformers
   - 提供向量存储和检索功能
 
-## 📄 许可证
-
-MIT License
-
-## 🙏 致谢
-
-- Chrome Extensions 开发团队
-- AI 平台提供商
-- 开源社区
-- [RagBackend](https://github.com/pgnzbl/RagBackend) 项目
 
 ## 📞 联系方式
 
